@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manifest — Local Business Scraper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#10131A;
+    --panel:#161B24;
+    --panel-2:#1B2029;
+    --border:#262C38;
+    --text:#E9E6DC;
+    --text-dim:#838A98;
+    --text-faint:#4E5560;
+    --accent:#FF9F40;
+    --accent-dim:#8A5A29;
+    --accent-2:#57D9C4;
+    --danger:#FF6B6B;
+    --radius:10px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:
+      linear-gradient(var(--border) 1px, transparent 1px) 0 0/48px 48px,
+      linear-gradient(90deg, var(--border) 1px, transparent 1px) 0 0/48px 48px,
+      var(--bg);
+    background-blend-mode: normal;
+    background-color: var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+  }
+  body{
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size:48px 48px;
+  }
+
+  ::selection{ background:var(--accent); color:#10131A; }
+
+  a{ color:var(--accent-2); }
+
+  .app{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    min-height:100vh;
+  }
+
+  /* ---------- Sidebar / console ---------- */
+  .console{
+    background:var(--panel);
+    border-right:1px solid var(--border);
+    padding:28px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+  }
+
+  .brand{ display:flex; flex-direction:column; gap:4px; }
+  .brand .mark{
+    display:flex; align-items:center; gap:8px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:20px; letter-spacing:-0.01em;
+  }
+  .brand .mark .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 3px rgba(255,159,64,0.15);
+  }
+  .brand .sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:0.08em;
+  }
+
+  .field{ display:flex; flex-direction:column; gap:8px; }
+  .field label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; color:var(--text-dim);
+    text-transform:uppercase; letter-spacing:0.08em;
+  }
+  .field input[type=text], .field input[type=number]{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:11px 12px;
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size:13.5px;
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .field input::placeholder{ color:var(--text-faint); }
+  .field input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(255,159,64,0.12);
+  }
+
+  .row2{ display:grid; grid-template-columns:1fr; gap:16px; }
+
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600; font-size:14px;
+    padding:12px 16px;
+    border-radius:8px;
+    transition:transform .1s ease, background .15s ease, opacity .15s ease;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn:disabled{ opacity:0.45; cursor:not-allowed; }
+  .btn-primary{ background:var(--accent); color:#1A1206; }
+  .btn-primary:hover:not(:disabled){ background:#FFB05C; }
+  .btn-ghost{
+    background:transparent; color:var(--text-dim);
+    border:1px solid var(--border);
+  }
+  .btn-ghost:hover:not(:disabled){ color:var(--text); border-color:var(--text-faint); }
+
+  .divider{ height:1px; background:var(--border); }
+
+  /* status log */
+  .log-head{
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .log-head .title{
+    font-family:'JetBrains Mono', monospace; font-size:11px;
+    color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em;
+  }
+  .pulse{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--text-faint);
+  }
+  .pulse.live{
+    background:var(--accent-2);
+    box-shadow:0 0 0 0 rgba(87,217,196,0.6);
+    animation:radar 1.6s ease-out infinite;
+  }
+  @keyframes radar{
+    0%{ box-shadow:0 0 0 0 rgba(87,217,196,0.55); }
+    100%{ box-shadow:0 0 0 9px rgba(87,217,196,0); }
+  }
+
+  .log{
+    flex:1;
+    min-height:160px;
+    max-height:320px;
+    overflow-y:auto;
+    background:#0C0F15;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    line-height:1.7;
+    color:var(--text-dim);
+  }
+  .log .entry{ display:flex; gap:8px; }
+  .log .entry .t{ color:var(--text-faint); flex-shrink:0; }
+  .log .entry.err{ color:var(--danger); }
+  .log::-webkit-scrollbar{ width:8px; }
+  .log::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+
+  .footer-note{
+    margin-top:auto;
+    font-size:11.5px;
+    color:var(--text-faint);
+    line-height:1.6;
+  }
+
+  /* ---------- Main / manifest ---------- */
+  .main{ padding:36px 44px; display:flex; flex-direction:column; gap:22px; min-width:0; }
+
+  .main-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .main-head h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600; font-size:22px; margin:0;
+    letter-spacing:-0.01em;
+  }
+  .main-head .meta{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; color:var(--text-dim);
+  }
+
+  .stat-strip{
+    display:flex; gap:28px;
+    padding:16px 20px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+  }
+  .stat{ display:flex; flex-direction:column; gap:4px; }
+  .stat .n{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:22px; color:var(--accent); }
+  .stat .l{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; }
+
+  /* table */
+  .manifest{
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:var(--panel);
+  }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px; text-transform:uppercase; letter-spacing:0.07em;
+    color:var(--text-dim);
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+    background:var(--panel-2);
+    position:sticky; top:0;
+  }
+  tbody td{
+    padding:13px 16px;
+    font-size:13.5px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+    color:var(--text);
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:rgba(255,255,255,0.015); }
+  td.name{ font-weight:600; }
+  td.mono, th.mono-h{ font-family:'JetBrains Mono', monospace; }
+  td.dim{ color:var(--text-dim); }
+  td .cat-pill{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--accent-2);
+    background:rgba(87,217,196,0.08);
+    border:1px solid rgba(87,217,196,0.25);
+    padding:2px 8px;
+    border-radius:100px;
+  }
+  td a.site{ color:var(--accent-2); text-decoration:none; }
+  td a.site:hover{ text-decoration:underline; }
+
+  tr.pin-in{
+    animation:pinDrop .5s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes pinDrop{
+    0%{ opacity:0; transform:translateY(-10px) scale(0.98); }
+    60%{ opacity:1; transform:translateY(2px) scale(1.002); }
+    100%{ opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  .empty-state{
+    padding:64px 24px;
+    text-align:center;
+    color:var(--text-dim);
+  }
+  .empty-state .glyph{
+    width:34px; height:34px; margin:0 auto 14px;
+    border:1.5px solid var(--text-faint);
+    border-radius:50%;
+    position:relative;
+  }
+  .empty-state .glyph::after{
+    content:"";
+    position:absolute; left:50%; top:100%;
+    width:1.5px; height:14px;
+    background:var(--text-faint);
+    transform:translateX(-50%) rotate(35deg);
+    transform-origin:top;
+  }
+  .empty-state h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600; color:var(--text); margin:0 0 6px;
+    font-size:15px;
+  }
+  .empty-state p{ margin:0; font-size:13px; max-width:340px; margin:0 auto; }
+
+  @media (prefers-reduced-motion: reduce){
+    .pulse.live{ animation:none; }
+    tr.pin-in{ animation:none; }
+  }
+
+  @media (max-width: 860px){
+    .app{ grid-template-columns:1fr; }
+    .console{ border-right:none; border-bottom:1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Console / controls -->
+  <aside class="console">
+    <div class="brand">
+      <div class="mark"><span class="dot"></span> Manifest</div>
+      <div class="sub">Local business scraper — v1</div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="query">Search query</label>
+        <input id="query" type="text" placeholder="e.g. cafes in Bandra, Mumbai" value="cafes in Bandra, Mumbai">
+      </div>
+      <div class="field">
+        <label for="limit">Max listings</label>
+        <input id="limit" type="number" min="1" max="200" value="30">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="apiBase">Backend URL</label>
+      <input id="apiBase" type="text" value="http://localhost:8000">
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <button id="startBtn" class="btn btn-primary" style="flex:1;">Start scan</button>
+      <button id="stopBtn" class="btn btn-ghost" disabled>Stop</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="display:flex; flex-direction:column; gap:10px; flex:1; min-height:0;">
+      <div class="log-head">
+        <span class="title">Status log</span>
+        <span id="pulse" class="pulse"></span>
+      </div>
+      <div id="log" class="log">
+        <div class="entry"><span class="t">--:--:--</span><span>Idle. Enter a query and start a scan.</span></div>
+      </div>
+    </div>
+
+    <p class="footer-note">
+      Runs against your own local backend. Scraping Google Maps is against Google's Terms of Service —
+      use for personal/low-volume research, not resale, and avoid running large jobs back-to-back.
+    </p>
+  </aside>
+
+  <!-- Main manifest -->
+  <main class="main">
+    <div class="main-head">
+      <h1 id="mainTitle">No scan running</h1>
+      <span id="mainMeta" class="meta">—</span>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat"><span id="statFound" class="n">0</span><span class="l">Listings found</span></div>
+      <div class="stat"><span id="statTarget" class="n">30</span><span class="l">Target</span></div>
+      <div class="stat"><span id="statState" class="n" style="font-size:16px;">Idle</span><span class="l">State</span></div>
+    </div>
+
+    <div class="manifest">
+      <table>
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Category</th>
+            <th class="mono-h">Rating</th>
+            <th class="mono-h">Reviews</th>
+            <th>Address</th>
+            <th>Phone</th>
+            <th>Website</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state">
+        <div class="glyph"></div>
+        <h3>Nothing on the manifest yet</h3>
+        <p>Results land here as each listing is scraped — no need to wait for the full run to finish.</p>
+      </div>
+    </div>
+
+    <div>
+      <button id="exportBtn" class="btn btn-ghost" disabled>Export CSV</button>
+    </div>
+  </main>
+
+</div>
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+
+  const startBtn = $('startBtn');
+  const stopBtn = $('stopBtn');
+  const exportBtn = $('exportBtn');
+  const queryInput = $('query');
+  const limitInput = $('limit');
+  const apiBaseInput = $('apiBase');
+  const logEl = $('log');
+  const pulseEl = $('pulse');
+  const tbody = $('tbody');
+  const emptyState = $('emptyState');
+  const mainTitle = $('mainTitle');
+  const mainMeta = $('mainMeta');
+  const statFound = $('statFound');
+  const statTarget = $('statTarget');
+  const statState = $('statState');
+
+  let currentJobId = null;
+  let pollTimer = null;
+  let resultsSeen = 0;
+
+  function apiBase(){
+    return apiBaseInput.value.replace(/\/$/, '');
+  }
+
+  function logLine(msg, isErr){
+    const time = new Date().toLocaleTimeString('en-GB');
+    const div = document.createElement('div');
+    div.className = 'entry' + (isErr ? ' err' : '');
+    div.innerHTML = `<span class="t">${time}</span><span></span>`;
+    div.querySelector('span:last-child').textContent = msg;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function escapeHtml(s){
+    return (s || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function appendRow(row){
+    emptyState.style.display = 'none';
+    const tr = document.createElement('tr');
+    tr.className = 'pin-in';
+    const website = row.website
+      ? `<a class="site" href="${escapeHtml(row.website)}" target="_blank" rel="noopener">visit ↗</a>`
+      : `<span class="dim">—</span>`;
+    tr.innerHTML = `
+      <td class="name">${escapeHtml(row.name) || '—'}</td>
+      <td>${row.category ? `<span class="cat-pill">${escapeHtml(row.category)}</span>` : '<span class="dim">—</span>'}</td>
+      <td class="mono">${escapeHtml(row.rating) || '<span class="dim">—</span>'}</td>
+      <td class="mono">${escapeHtml(row.reviews) || '<span class="dim">—</span>'}</td>
+      <td class="dim">${escapeHtml(row.address) || '—'}</td>
+      <td class="mono dim">${escapeHtml(row.phone) || '—'}</td>
+      <td>${website}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function setRunningUI(isRunning){
+    startBtn.disabled = isRunning;
+    stopBtn.disabled = !isRunning;
+    pulseEl.classList.toggle('live', isRunning);
+  }
+
+  async function pollJob(){
+    if (!currentJobId) return;
+    try{
+      const res = await fetch(`${apiBase()}/api/jobs/${currentJobId}?since=${resultsSeen}`);
+      if (!res.ok) throw new Error(`Server responded ${res.status}`);
+      const data = await res.json();
+
+      for (const row of data.results) {
+        appendRow(row);
+      }
+      resultsSeen = data.result_count;
+      statFound.textContent = data.result_count;
+      statState.textContent = data.state === 'running' ? 'Scanning' : (data.state === 'done' ? 'Complete' : 'Error');
+      mainMeta.textContent = data.last_status || '';
+
+      if (data.state === 'running') {
+        pollTimer = setTimeout(pollJob, 1200);
+      } else {
+        setRunningUI(false);
+        exportBtn.disabled = data.result_count === 0;
+        if (data.state === 'error') {
+          logLine(`Job failed: ${data.error}`, true);
+        } else {
+          logLine(`Scan complete — ${data.result_count} listing(s) captured.`);
+        }
+      }
+    } catch(err){
+      logLine(`Connection error: ${err.message}. Is the backend running at ${apiBase()}?`, true);
+      setRunningUI(false);
+    }
+  }
+
+  startBtn.addEventListener('click', async () => {
+    const query = queryInput.value.trim();
+    const limit = parseInt(limitInput.value, 10) || 30;
+    if (!query){
+      logLine('Enter a search query first.', true);
+      return;
+    }
+
+    tbody.innerHTML = '';
+    emptyState.style.display = 'block';
+    resultsSeen = 0;
+    statFound.textContent = '0';
+    statTarget.textContent = limit;
+    statState.textContent = 'Starting';
+    mainTitle.textContent = `“${query}”`;
+    mainMeta.textContent = 'Launching browser…';
+    exportBtn.disabled = true;
+
+    setRunningUI(true);
+    logLine(`Starting scan for "${query}" (limit ${limit})…`);
+
+    try{
+      const res = await fetch(`${apiBase()}/api/jobs`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({query, limit})
+      });
+      if (!res.ok) throw new Error(`Server responded ${res.status}`);
+      const data = await res.json();
+      currentJobId = data.job_id;
+      pollJob();
+    } catch(err){
+      logLine(`Could not start job: ${err.message}. Is the backend running at ${apiBase()}?`, true);
+      setRunningUI(false);
+    }
+  });
+
+  stopBtn.addEventListener('click', async () => {
+    if (!currentJobId) return;
+    try{
+      await fetch(`${apiBase()}/api/jobs/${currentJobId}/stop`, {method: 'POST'});
+      logLine('Stop requested — finishing current listing…');
+    } catch(err){
+      logLine(`Could not send stop request: ${err.message}`, true);
+    }
+  });
+
+  exportBtn.addEventListener('click', () => {
+    if (!currentJobId) return;
+    window.location.href = `${apiBase()}/api/jobs/${currentJobId}/csv`;
+  });
+})();
+</script>
+</body>
+</html>
