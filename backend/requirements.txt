@@ -1,4 +1,4 @@
-fastapi>=0.111
-uvicorn[standard]>=0.30
-playwright>=1.44
-pydantic>=2.7
+fastapi>=0.111,<1
+uvicorn[standard]>=0.30,<1
+playwright>=1.44,<2
+pydantic>=2.7,<3
